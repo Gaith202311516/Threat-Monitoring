@@ -1,0 +1,15 @@
+cd ~/Desktop/threat-monitoring-system
+
+cat << 'EOF' > .gitignore
+# Python / Backend
+venv/
+__pycache__/
+*.pyc
+*.sqlite3
+.env
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+.DS_Store
+EOF
