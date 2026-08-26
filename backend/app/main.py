@@ -6,6 +6,7 @@ from datetime import datetime
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import insert, select, desc, update, func, text
 
 from app.database import engine, metadata
@@ -16,6 +17,14 @@ from app.services.threat_detector import ThreatDetector, BLACKLISTED_IPS
 metadata.create_all(bind=engine)
 
 app = FastAPI(title="Real-Time Threat Intelligence System")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class ConnectionManager:
     def __init__(self):
@@ -50,7 +59,6 @@ async def websocket_endpoint(websocket: WebSocket):
 async def ingest_log(raw_message: str):
     parsed = LogParser.parse_raw_log(raw_message)
     
-    # 1. حفظ السجل في قاعدة البيانات
     stmt = insert(logs_table).values(**parsed).returning(logs_table.c.id)
     with engine.connect() as conn:
         result = conn.execute(stmt)
@@ -66,7 +74,6 @@ async def ingest_log(raw_message: str):
     }
     await manager.broadcast(log_data)
     
-    # 2. تحليل التهديد
     alert = ThreatDetector.analyze_log(
         log_id=new_id,
         source_ip=parsed["source_ip"],
@@ -74,7 +81,6 @@ async def ingest_log(raw_message: str):
         severity=parsed["severity"]
     )
     
-    # 3. إذا وجد تهديد، احفظه في PostgreSQL وقم ببثه عبر WebSocket
     if alert:
         alert_stmt = insert(threat_alerts_table).values(
             log_id=alert["log_id"],
