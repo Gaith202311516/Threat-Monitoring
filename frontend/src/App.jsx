@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
-const API_BASE = 'http://127.0.0.1:8000/api';
-const WS_URL = 'ws://127.0.0.1:8000/ws/logs';
+// ربط التطبيق بمتغيرات البيئة مع إبقاء قيم افتراضية للتأمين
+const API_HOST = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const API_BASE = `${API_HOST}/api`;
+const WS_URL = import.meta.env.VITE_WS_URL || 'ws://127.0.0.1:8000/ws/logs';
 
 export default function App() {
   const [logs, setLogs] = useState([]);
